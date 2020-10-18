@@ -2,16 +2,19 @@
 
 namespace barefoot;
 
-/**
+/*
  * Barefoot
  * Streamlined tools for PHP minimalists.
  */
+
+define('BAREFOOT_SESSION_KEY_CSRF', getenv('BAREFOOT_SESSION_KEY_CSRF') ?: 'barefoot_csrf');
+define('BAREFOOT_SESSION_KEY_FLASH', getenv('BAREFOOT_SESSION_KEY_FLASH') ?: 'barefoot_flash');
 
 // Responses
 
 function route(array $routes, callable $not_found): void
 {
-    $path = '/'.trim(explode('?', $_SERVER['PATH_INFO'])[0], '/');
+    $path = '/'.trim($_SERVER['PATH_INFO'], '/');
     foreach ($routes as $route => $callable) {
         $route = '/'.trim($route, '/');
         $regex = '/^'.str_replace('/', '\/', $route).'$/';
@@ -25,7 +28,7 @@ function route(array $routes, callable $not_found): void
 
 function redirect_and_exit(string $location): void
 {
-    header("Location: ${location}", true, 302);
+    header("Location: {$location}", true, 302);
     exit;
 }
 
@@ -69,13 +72,13 @@ function request_get_ip_address(string $default = '0.0.0.0'): string
 
 function csrf_get_token(string $id): string
 {
-    if (!isset($_SESSION['csrf'])) {
-        $_SESSION['csrf'] = [];
+    if (!isset($_SESSION[BAREFOOT_SESSION_KEY_CSRF])) {
+        $_SESSION[BAREFOOT_SESSION_KEY_CSRF] = [];
     }
-    if (!isset($_SESSION['csrf'][$id])) {
-        $_SESSION['csrf'][$id] = bin2hex(random_bytes(16));
+    if (!isset($_SESSION[BAREFOOT_SESSION_KEY_CSRF][$id])) {
+        $_SESSION[BAREFOOT_SESSION_KEY_CSRF][$id] = bin2hex(random_bytes(16));
     }
-    return $_SESSION['csrf'][$id];
+    return $_SESSION[BAREFOOT_SESSION_KEY_CSRF][$id];
 }
 
 function csrf_validate_token(string $id, string $token, callable $invalid): void
@@ -87,28 +90,28 @@ function csrf_validate_token(string $id, string $token, callable $invalid): void
 
 function csrf_unset_token(string $id): void
 {
-    unset($_SESSION['csrf'][$id]);
+    unset($_SESSION[BAREFOOT_SESSION_KEY_CSRF][$id]);
 }
 
 // Flash messages
 
 function flash_set_message(string $key, string $value): void
 {
-    if (!isset($_SESSION['flash'])) {
-        $_SESSION['flash'] = [];
+    if (!isset($_SESSION[BAREFOOT_SESSION_KEY_FLASH])) {
+        $_SESSION[BAREFOOT_SESSION_KEY_FLASH] = [];
     }
-    $_SESSION['flash'][$key] = $value;
+    $_SESSION[BAREFOOT_SESSION_KEY_FLASH][$key] = $value;
 }
 
 function flash_get_message(string $key, string $default = ''): string
 {
     if (
-        !isset($_SESSION['flash']) ||
-        !isset($_SESSION['flash'][$key])
+        !isset($_SESSION[BAREFOOT_SESSION_KEY_FLASH]) ||
+        !isset($_SESSION[BAREFOOT_SESSION_KEY_FLASH][$key])
     ) {
         return $default;
     }
-    $value = $_SESSION['flash'][$key];
-    unset($_SESSION['flash'][$key]);
+    $value = $_SESSION[BAREFOOT_SESSION_KEY_FLASH][$key];
+    unset($_SESSION[BAREFOOT_SESSION_KEY_FLASH][$key]);
     return $value;
 }
